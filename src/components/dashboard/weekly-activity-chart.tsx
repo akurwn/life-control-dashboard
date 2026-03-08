@@ -1,34 +1,32 @@
 "use client"
 
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts"
+import type { WeeklyActivityPoint } from "@/lib/calculations/weekly-chart"
 
 type WeeklyActivityChartProps = {
-  data: {
-    day: string
-    completed: number
-  }[]
+  data: WeeklyActivityPoint[]
 }
 
 export default function WeeklyActivityChart({
   data,
 }: WeeklyActivityChartProps) {
   return (
-    <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+    <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
       <div className="mb-5">
         <p className="text-sm text-white/45">Activity Trend</p>
         <h3 className="mt-2 text-2xl font-semibold tracking-tight">
           Ritme 7 hari terakhir
         </h3>
         <p className="mt-2 text-sm leading-6 text-white/60">
-          Lihat kapan kamu aktif dan seberapa stabil ritme progress kamu minggu ini.
+          Grafik ini menunjukkan berapa action yang kamu selesaikan setiap hari.
         </p>
       </div>
 
@@ -68,6 +66,6 @@ export default function WeeklyActivityChart({
           </LineChart>
         </ResponsiveContainer>
       </div>
-    </div>
+    </section>
   )
 }
