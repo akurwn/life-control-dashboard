@@ -1,19 +1,14 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { calculate7DayConsistency } from "@/lib/calculations/consistency"
-import { calculateTrajectory } from "@/lib/calculations/trajectory"
-import { calculateStability } from "@/lib/calculations/stability"
+
 import TodayActions from "@/components/dashboard/today-actions"
-import ConsistencyCard from "@/components/dashboard/consistency-card"
+import GoalsList from "@/components/dashboard/goals-list"
+import TransactionsList from "@/components/dashboard/transactions-list"
 import RiskInsightCard from "@/components/dashboard/risk-insight-card"
 
-function getGreeting() {
-  const hour = new Date().getHours()
-
-  if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
-  return "Good evening"
-}
+import { calculate7DayConsistency } from "@/lib/calculations/consistency"
+import { calculateStability } from "@/lib/calculations/stability"
+import { calculateLifeScore } from "@/lib/calculations/life-score"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -32,18 +27,14 @@ export default async function DashboardPage() {
   startDate.setDate(startDate.getDate() - 6)
   const start = startDate.toISOString().slice(0, 10)
 
-  const [goalsResult, todayLogsResult, weeklyLogsResult, actionsResult, transactionsResult] =
+  const [goalsResult, transactionsResult, logsResult, todayLogsResult] =
     await Promise.all([
-      supabase
-        .from("goals")
-        .select("id, target_amount, current_amount, status", { count: "exact" })
-        .eq("user_id", user.id),
+      supabase.from("goals").select("*").eq("user_id", user.id),
 
       supabase
-        .from("action_logs")
-        .select("id", { count: "exact" })
-        .eq("user_id", user.id)
-        .eq("completed_date", today),
+        .from("transactions")
+        .select("type, amount")
+        .eq("user_id", user.id),
 
       supabase
         .from("action_logs")
@@ -52,41 +43,28 @@ export default async function DashboardPage() {
         .gte("completed_date", start),
 
       supabase
-        .from("goal_actions")
+        .from("action_logs")
         .select("id", { count: "exact" })
-        .eq("user_id", user.id),
-
-      supabase
-        .from("transactions")
-        .select("type, amount")
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .eq("completed_date", today),
     ])
 
   const goals = goalsResult.data || []
-  const completedToday = todayLogsResult.count || 0
-  const totalActions = actionsResult.count || 0
   const transactions = transactionsResult.data || []
+  const logs = logsResult.data || []
+  const completedToday = todayLogsResult.count || 0
 
-  const completedDates = (weeklyLogsResult.data || []).map(
-    (log) => log.completed_date
-  )
+  const totalTarget =
+    goals.reduce((sum, g) => sum + Number(g.target_amount || 0), 0) || 0
 
-  const consistencyResult = calculate7DayConsistency(completedDates)
+  const totalCurrent =
+    goals.reduce((sum, g) => sum + Number(g.current_amount || 0), 0) || 0
 
-  const totalTarget = goals.reduce(
-    (sum, goal) => sum + Number(goal.target_amount || 0),
-    0
-  )
-
-  const totalCurrent = goals.reduce(
-    (sum, goal) => sum + Number(goal.current_amount || 0),
-    0
-  )
-
-  const overallGoalProgress =
+  const goalProgress =
     totalTarget > 0 ? Math.round((totalCurrent / totalTarget) * 100) : 0
 
-  const activeGoals = goals.filter((goal) => goal.status !== "completed").length
+  const completedDates = logs.map((log) => log.completed_date)
+  const consistency = calculate7DayConsistency(completedDates)
 
   const totalIncome = transactions
     .filter((item) => item.type === "income")
@@ -101,132 +79,121 @@ export default async function DashboardPage() {
     totalExpense,
   })
 
-  const lifeScore = Math.min(
-    100,
-    Math.round(
-      consistencyResult.consistency * 0.35 +
-        overallGoalProgress * 0.3 +
-        stability.score * 0.25 +
-        Math.min(activeGoals * 5, 10)
-    )
-  )
-
-  const trajectory = calculateTrajectory({
-    consistency: consistencyResult.consistency,
-    goalProgress: overallGoalProgress,
+  const lifeScore = calculateLifeScore({
+    goalProgress,
+    consistency: consistency.consistency,
+    stabilityScore: stability.score,
     completedToday,
   })
 
-  const displayName =
-    user.user_metadata?.full_name || user.email?.split("@")[0] || "there"
-
   return (
-    <main className="space-y-8">
-      <section className="overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_10px_40px_rgba(0,0,0,0.35)]">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm text-white/40">
-              {getGreeting()}, {displayName}
-            </p>
+    <main className="space-y-6">
+      <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <p className="text-sm text-white/50">Today Focus</p>
 
-            <h2 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
-              {trajectory.label}
-            </h2>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+          What moves your life forward today
+        </h2>
 
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/60 md:text-base">
-              {trajectory.description}
-            </p>
-          </div>
+        <p className="mt-2 text-sm text-white/60">
+          Sistem memilih action dengan dampak terbesar untuk menjaga momentum goal kamu.
+        </p>
 
-          <div className="grid grid-cols-2 gap-4 lg:min-w-[360px]">
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                Life Score
-              </p>
-              <p className="mt-3 text-4xl font-semibold">{lifeScore}</p>
-              <p className="mt-2 text-sm text-white/50">Overall direction</p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-white/35">
-                Done Today
-              </p>
-              <p className="mt-3 text-4xl font-semibold">{completedToday}</p>
-              <p className="mt-2 text-sm text-white/50">Actions completed</p>
-            </div>
-          </div>
+        <div className="mt-6">
+          <TodayActions />
         </div>
       </section>
 
-      <TodayActions />
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+          <p className="text-sm text-white/50">Life Score</p>
 
-      <section className="grid gap-4 xl:grid-cols-4">
-        <ConsistencyCard />
+          <h3 className="mt-3 text-5xl font-semibold">{lifeScore.score}</h3>
+
+          <p className="mt-2 text-sm text-white/50">{lifeScore.label}</p>
+          <p className="mt-3 text-sm leading-6 text-white/60">
+            {lifeScore.insight}
+          </p>
+        </div>
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Goal Momentum</p>
+          <p className="text-sm text-white/50">Goal Progress</p>
 
-          <div className="mt-4 flex items-end gap-2">
-            <h3 className="text-4xl font-semibold">{overallGoalProgress}%</h3>
-            <p className="mb-1 text-sm text-white/40">overall progress</p>
-          </div>
+          <h3 className="mt-3 text-4xl font-semibold">{goalProgress}%</h3>
 
-          <p className="mt-3 text-sm leading-6 text-white/55">
-            Terkumpul / tercapai Rp {totalCurrent.toLocaleString("id-ID")} dari Rp{" "}
+          <p className="mt-2 text-sm text-white/50">
+            Rp {totalCurrent.toLocaleString("id-ID")} / Rp{" "}
             {totalTarget.toLocaleString("id-ID")}
           </p>
 
-          <div className="mt-5 h-2.5 w-full rounded-full bg-white/10">
+          <div className="mt-4 h-2.5 w-full rounded-full bg-white/10">
             <div
               className="h-2.5 rounded-full bg-white transition-all"
-              style={{ width: `${Math.min(overallGoalProgress, 100)}%` }}
+              style={{ width: `${Math.min(goalProgress, 100)}%` }}
             />
           </div>
         </div>
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Financial Stability</p>
+          <p className="text-sm text-white/50">Money Status</p>
 
-          <div className="mt-4 flex items-end gap-2">
-            <h3 className="text-4xl font-semibold">{stability.score}</h3>
-            <p className="mb-1 text-sm text-white/40">{stability.label}</p>
-          </div>
+          <h3 className="mt-3 text-4xl font-semibold">{stability.score}</h3>
 
-          <p className="mt-3 text-sm leading-6 text-white/55">
-            Runway {stability.runwayMonths} bulan dengan cashflow yang tercatat saat ini.
+          <p className="mt-2 text-sm text-white/50">
+            {stability.label} · Runway {stability.runwayMonths} mo
           </p>
 
-          <div className="mt-5 h-2.5 w-full rounded-full bg-white/10">
+          <div className="mt-4 h-2.5 w-full rounded-full bg-white/10">
             <div
               className="h-2.5 rounded-full bg-white transition-all"
               style={{ width: `${stability.score}%` }}
             />
           </div>
         </div>
+      </section>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">System Snapshot</p>
+      <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white/50">Goal Momentum</p>
 
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <span className="text-sm text-white/55">Active goals</span>
-              <span className="text-lg font-semibold">{activeGoals}</span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <span className="text-sm text-white/55">All goals</span>
-              <span className="text-lg font-semibold">{goals.length}</span>
-            </div>
-
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-              <span className="text-sm text-white/55">Available actions</span>
-              <span className="text-lg font-semibold">{totalActions}</span>
-            </div>
+            <h3 className="mt-1 text-2xl font-semibold">
+              Your progress in motion
+            </h3>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <GoalsList />
         </div>
       </section>
 
-      <RiskInsightCard />
+      <section className="grid gap-4 md:grid-cols-2">
+        <RiskInsightCard />
+
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+          <p className="text-sm text-white/50">Smart Insight</p>
+
+          <h3 className="mt-3 text-xl font-semibold">
+            Your system is learning your rhythm
+          </h3>
+
+          <p className="mt-3 text-sm leading-6 text-white/60">
+            Semakin sering kamu menyelesaikan action dan mencatat progress,
+            sistem akan semakin akurat membaca arah goal dan kondisi hidupmu.
+          </p>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+        <p className="text-sm text-white/50">Money Activity</p>
+
+        <h3 className="mt-2 text-2xl font-semibold">Latest Transactions</h3>
+
+        <div className="mt-6">
+          <TransactionsList />
+        </div>
+      </section>
     </main>
   )
 }
