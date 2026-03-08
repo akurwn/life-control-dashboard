@@ -1,8 +1,16 @@
-export default function HomePage() {
-  return (
-    <main style={{ padding: "40px", fontFamily: "sans-serif" }}>
-      <h1>Life Control Dashboard</h1>
-      <p>App is running successfully.</p>
-    </main>
-  );
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+
+export default async function HomePage() {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (user) {
+    redirect("/dashboard")
+  }
+
+  redirect("/sign-in")
 }
