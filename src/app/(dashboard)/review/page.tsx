@@ -76,9 +76,7 @@ export default async function ReviewPage() {
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
           <p className="text-sm text-white/50">Active Days</p>
-          <h3 className="mt-3 text-4xl font-semibold">
-            {review.activeDays}/7
-          </h3>
+          <h3 className="mt-3 text-4xl font-semibold">{review.activeDays}/7</h3>
           <p className="mt-2 text-sm text-white/55">
             Hari aktif dalam 7 hari terakhir
           </p>
@@ -86,9 +84,7 @@ export default async function ReviewPage() {
 
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
           <p className="text-sm text-white/50">Consistency</p>
-          <h3 className="mt-3 text-4xl font-semibold">
-            {review.consistency}%
-          </h3>
+          <h3 className="mt-3 text-4xl font-semibold">{review.consistency}%</h3>
           <p className="mt-2 text-sm text-white/55">
             Seberapa stabil ritme kamu minggu ini
           </p>
