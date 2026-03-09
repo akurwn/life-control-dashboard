@@ -2,7 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Target, Wallet, ListTodo, Brain, BarChart3 } from "lucide-react"
+import {
+  Home,
+  Target,
+  Wallet,
+  ListTodo,
+  Brain,
+  BarChart3,
+} from "lucide-react"
 
 export default function BottomNav() {
   const pathname = usePathname()
@@ -17,8 +24,8 @@ export default function BottomNav() {
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-neutral-950/95 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3">
+    <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-slate-950/90 backdrop-blur-xl md:hidden">
+      <div className="mx-auto flex max-w-md items-center justify-between px-3 py-3">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
@@ -27,8 +34,10 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-w-[52px] flex-col items-center text-[11px] transition ${
-                isActive ? "text-white" : "text-white/40"
+              className={`flex min-w-[52px] flex-col items-center rounded-2xl px-2 py-2 text-[11px] transition ${
+                isActive
+                  ? "bg-cyan-400/10 text-cyan-300"
+                  : "text-white/40 hover:text-white/70"
               }`}
             >
               <Icon size={18} />

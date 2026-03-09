@@ -6,6 +6,7 @@ import GoalsList from "@/components/dashboard/goals-list"
 import TransactionsList from "@/components/dashboard/transactions-list"
 import RiskInsightCard from "@/components/dashboard/risk-insight-card"
 import ScoreRing from "@/components/dashboard/score-ring"
+import AppCard from "@/components/ui/app-card"
 
 import { calculate7DayConsistency } from "@/lib/calculations/consistency"
 import { calculateStability } from "@/lib/calculations/stability"
@@ -34,8 +35,10 @@ export default async function DashboardPage() {
 
       supabase
         .from("transactions")
-        .select("type, amount")
-        .eq("user_id", user.id),
+        .select("type, amount, category, note, transaction_date, created_at, id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5),
 
       supabase
         .from("action_logs")
@@ -89,12 +92,11 @@ export default async function DashboardPage() {
 
   return (
     <main className="space-y-6">
-      <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/5 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.30)] md:p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(120,119,198,0.12),transparent_35%)]" />
-
-        <div className="relative grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div>
-            <p className="inline-flex rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs text-white/55">
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <AppCard className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.18),transparent_35%)]" />
+          <div className="relative">
+            <p className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-300">
               Today Focus
             </p>
 
@@ -111,22 +113,25 @@ export default async function DashboardPage() {
               <TodayActions />
             </div>
           </div>
+        </AppCard>
 
-          <div className="rounded-[28px] border border-white/10 bg-black/25 p-5 backdrop-blur">
+        <AppCard className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.14),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.10),transparent_35%)]" />
+          <div className="relative">
             <ScoreRing value={lifeScore.score} />
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-sm text-white/50">{lifeScore.label}</p>
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-sm text-violet-300/80">{lifeScore.label}</p>
               <p className="mt-2 text-sm leading-6 text-white/65">
                 {lifeScore.insight}
               </p>
             </div>
           </div>
-        </div>
+        </AppCard>
       </section>
 
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Goal Progress</p>
+        <AppCard>
+          <p className="text-sm text-cyan-300/70">Goal Progress</p>
 
           <div className="mt-3 flex items-end gap-2">
             <h3 className="text-4xl font-semibold">{goalProgress}%</h3>
@@ -140,14 +145,14 @@ export default async function DashboardPage() {
 
           <div className="mt-4 h-2.5 w-full rounded-full bg-white/10">
             <div
-              className="h-2.5 rounded-full bg-white transition-all"
+              className="h-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all"
               style={{ width: `${Math.min(goalProgress, 100)}%` }}
             />
           </div>
-        </div>
+        </AppCard>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Consistency</p>
+        <AppCard>
+          <p className="text-sm text-emerald-300/70">Consistency</p>
 
           <div className="mt-3 flex items-end gap-2">
             <h3 className="text-4xl font-semibold">
@@ -163,14 +168,14 @@ export default async function DashboardPage() {
 
           <div className="mt-4 h-2.5 w-full rounded-full bg-white/10">
             <div
-              className="h-2.5 rounded-full bg-white transition-all"
+              className="h-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400 transition-all"
               style={{ width: `${consistency.consistency}%` }}
             />
           </div>
-        </div>
+        </AppCard>
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Money Status</p>
+        <AppCard>
+          <p className="text-sm text-amber-300/70">Money Status</p>
 
           <div className="mt-3 flex items-end gap-2">
             <h3 className="text-4xl font-semibold">{stability.score}</h3>
@@ -183,17 +188,17 @@ export default async function DashboardPage() {
 
           <div className="mt-4 h-2.5 w-full rounded-full bg-white/10">
             <div
-              className="h-2.5 rounded-full bg-white transition-all"
+              className="h-2.5 rounded-full bg-gradient-to-r from-amber-400 to-rose-400 transition-all"
               style={{ width: `${stability.score}%` }}
             />
           </div>
-        </div>
+        </AppCard>
       </section>
 
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+      <AppCard>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-white/50">Goal Momentum</p>
+            <p className="text-sm text-violet-300/70">Goal Momentum</p>
             <h3 className="mt-1 text-2xl font-semibold">
               Your progress in motion
             </h3>
@@ -203,46 +208,49 @@ export default async function DashboardPage() {
         <div className="mt-6">
           <GoalsList />
         </div>
-      </section>
+      </AppCard>
 
       <section className="grid gap-4 md:grid-cols-2">
         <RiskInsightCard />
 
-        <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-          <p className="text-sm text-white/50">Smart Insight</p>
+        <AppCard className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.12),transparent_35%)]" />
+          <div className="relative">
+            <p className="text-sm text-violet-300/70">Smart Insight</p>
 
-          <h3 className="mt-3 text-xl font-semibold">
-            Your system is learning your rhythm
-          </h3>
+            <h3 className="mt-3 text-xl font-semibold">
+              Your system is learning your rhythm
+            </h3>
 
-          <p className="mt-3 text-sm leading-6 text-white/60">
-            Semakin sering kamu menyelesaikan action dan mencatat progress,
-            sistem akan semakin akurat membaca arah goal dan kondisi hidupmu.
-          </p>
+            <p className="mt-3 text-sm leading-6 text-white/60">
+              Semakin sering kamu menyelesaikan action dan mencatat progress,
+              sistem akan semakin akurat membaca arah goal dan kondisi hidupmu.
+            </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-white/45">Completed today</p>
-              <p className="mt-2 text-2xl font-semibold">{completedToday}</p>
-            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs text-white/45">Completed today</p>
+                <p className="mt-2 text-2xl font-semibold">{completedToday}</p>
+              </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-              <p className="text-xs text-white/45">Active goals</p>
-              <p className="mt-2 text-2xl font-semibold">{goals.length}</p>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <p className="text-xs text-white/45">Active goals</p>
+                <p className="mt-2 text-2xl font-semibold">{goals.length}</p>
+              </div>
             </div>
           </div>
-        </div>
+        </AppCard>
       </section>
 
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-        <p className="text-sm text-white/50">Money Activity</p>
+      <AppCard>
+        <p className="text-sm text-cyan-300/70">Money Activity</p>
 
         <h3 className="mt-2 text-2xl font-semibold">Latest Transactions</h3>
 
         <div className="mt-6">
           <TransactionsList />
         </div>
-      </section>
+      </AppCard>
     </main>
   )
 }
