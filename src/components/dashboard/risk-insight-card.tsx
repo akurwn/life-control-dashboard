@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { calculateStability } from "@/lib/calculations/stability"
 import { calculate7DayConsistency } from "@/lib/calculations/consistency"
 import { calculateRiskInsight } from "@/lib/calculations/risk-insight"
+import AppCard from "@/components/ui/app-card"
 
 export default async function RiskInsightCard() {
   const supabase = await createClient()
@@ -61,49 +62,53 @@ export default async function RiskInsightCard() {
   })
 
   return (
-    <section className="rounded-[28px] border border-white/10 bg-white/5 p-6">
-      <div className="mb-5">
-        <p className="text-sm text-white/45">Risk Insight</p>
-        <h3 className="mt-2 text-2xl font-semibold tracking-tight">
-          What needs attention right now
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-white/60">
-          Blok ini membantu kamu melihat risiko terbesar, goal paling rentan, dan langkah paling aman minggu ini.
-        </p>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-          <p className="text-sm text-white/50">Biggest Risk Right Now</p>
-          <p className="mt-3 text-sm leading-7 text-white/65">
-            {insight.biggestRisk}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-          <p className="text-sm text-white/50">Most Vulnerable Goal</p>
-          <p className="mt-3 text-xl font-semibold text-white">
-            {insight.vulnerableGoalTitle || "No clear risk detected"}
-          </p>
+    <AppCard className="relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,191,36,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(244,63,94,0.12),transparent_35%)]" />
+      <div className="relative">
+        <div className="mb-5">
+          <p className="text-sm text-amber-300/80">Risk Insight</p>
+          <h3 className="mt-2 text-2xl font-semibold tracking-tight">
+            What needs attention right now
+          </h3>
           <p className="mt-2 text-sm leading-6 text-white/60">
-            Goal ini paling layak kamu jaga agar tidak kehilangan momentum atau tertunda.
+            Blok ini membantu kamu melihat risiko terbesar, goal paling rentan,
+            dan langkah paling aman minggu ini.
           </p>
         </div>
 
-        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-          <p className="text-sm text-white/50">Safest Move This Week</p>
-          <p className="mt-3 text-sm leading-7 text-white/65">
-            {insight.safestMove}
-          </p>
-        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/50">Biggest Risk Right Now</p>
+            <p className="mt-3 text-sm leading-7 text-white/65">
+              {insight.biggestRisk}
+            </p>
+          </div>
 
-        <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
-          <p className="text-sm text-white/50">Recommended Focus</p>
-          <p className="mt-3 text-sm leading-7 text-white/65">
-            {insight.recommendedFocus}
-          </p>
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/50">Most Vulnerable Goal</p>
+            <p className="mt-3 text-xl font-semibold text-white">
+              {insight.vulnerableGoalTitle || "No clear risk detected"}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-white/60">
+              Goal ini paling layak kamu jaga agar tidak kehilangan momentum atau tertunda.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/50">Safest Move This Week</p>
+            <p className="mt-3 text-sm leading-7 text-white/65">
+              {insight.safestMove}
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/50">Recommended Focus</p>
+            <p className="mt-3 text-sm leading-7 text-white/65">
+              {insight.recommendedFocus}
+            </p>
+          </div>
         </div>
       </div>
-    </section>
+    </AppCard>
   )
 }
